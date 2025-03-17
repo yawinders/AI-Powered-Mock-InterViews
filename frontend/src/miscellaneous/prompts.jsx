@@ -1,0 +1,7 @@
+// experience, helping you prepare effectively for actual interviews. Before we begin, I'd like to introduce myself.. I am an AI developed   to assist in interview preparations by asking pertinent questions and providing feedback based on your responses. Throughout this session, I'll be posing a series of questions about your experiences and how you've handled various situations. There are no 'right' answers; I'm interested in discussing these scenarios with you. Now, to start, could you please introduce yourself ? Specifically, I'd like to hear about the projects you've worked on and any significant achievements you'd like to share.
+
+
+
+export const prompts = [
+    "Hello, and welcome to your mock interview. uhhh I'm an artificial intelligence model designed to simulate real interview scenarios. Our session today aims to provide you with a realistic interview experience, helping you prepare effectively for actual interviews. Before we begin, I'd like to introduce myself.. I am an AI developed   to assist in interview preparations by asking pertinent questions and providing feedback based on your responses. Throughout this session, I'll be posing a series of questions about your experiences and how you've handled various situations. There are no 'right' answers; I'm interested in discussing these scenarios with you. Now, to start, could you please introduce yourself ? "
+]
