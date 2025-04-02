@@ -11,17 +11,17 @@ import { useLocation } from 'react-router-dom'
 import Timer from '../components/Timer.jsx'
 
 const Interview = ({ level, topic }) => {
-    const [startInteview, setStartInteview] = useState(false)
+    // const [startInteview, setStartInteview] = useState(false)
     const [isCameraOn, setIsCameraOn] = useState(false);
     const [isMicOn, setIsMicOn] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     // const [displayedSentence, setDisplayedSentence] = useState('');
-    const { displayedSentence, setDisplayedSentence, displayedSegment, setDisplayedSegment } = useInterviewContext()
+    const { displayedSentence, setDisplayedSentence, displayedSegment, setDisplayedSegment, startInteview, setStartInteview } = useInterviewContext()
 
 
     const location = useLocation()
     const upComingSession = location?.state?.data;
-    console.log(upComingSession);
+    // console.log(upComingSession);
 
 
     const webcamRef = useRef(null);

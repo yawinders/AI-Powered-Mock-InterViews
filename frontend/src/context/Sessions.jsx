@@ -24,29 +24,43 @@ const SessionProvider = ({ children }) => {
 
     const navigate = useNavigate()
     const [upComingSession, setUpComingSession] = useState([]);
+    const [previousSession, setPreviousSession] = useState([])
+
+    // const [joinDisabled, setJoinDisabled] = useState(true);
 
     useEffect(() => {
-
         if (!userDateTime) return; // Stop if no input
 
         const checkTime = setInterval(() => {
             const now = new Date();
             const eventTime = new Date(userDateTime);
-            const timeDifference = eventTime - now;
+            const timeDifference = eventTime - now; // Difference in milliseconds
 
-            if (timeDifference > 0 && timeDifference <= 30 * 60 * 1000) {
-                setShowNotification(true);
-                setNotifications([...notifications, `Interview is Scheduled for ${tech} kindly join before ${userDateTime.split("T")[1]}`])
+            // Extract only the date part for comparison
+            const nowDate = now.toISOString().split("T")[0];
+            const eventDate = eventTime.toISOString().split("T")[0];
 
-            } else if (timeDifference <= 0) {
-                // Event time has passed, remove notification
-                setShowNotification(false);
-                clearInterval(checkTime); // Stop checking
+            if (nowDate === eventDate) { // Ensure both are on the same date
+                if (timeDifference > 0 && timeDifference <= 35 * 60 * 1000) {
+                    console.log("hii");
+                    setShowNotification(true);
+                    setNotifications([...notifications, `Interview is Scheduled for ${tech} kindly join before ${userDateTime.split("T")[1]}`]);
+
+                } else if (timeDifference <= -5 * 60 * 1000) {
+                    console.log('hello');
+                    setShowNotification(false);
+                    clearInterval(checkTime); // Stop checking
+
+                    // Updating previous session list
+                    setPreviousSession([...previousSession, { tech, level }]);
+                }
             }
+
         }, 10000); // Check every 10 seconds
 
         return () => clearInterval(checkTime);
-    }, [userDateTime])
+    }, [userDateTime]);
+
     useEffect(() => {
         {
             showNotification && toast({
@@ -62,6 +76,13 @@ const SessionProvider = ({ children }) => {
 
     }, [showNotification])
 
+    // useEffect(() => {
+    //   setPreviousSession([...previousSession,...upComingSession?.map((session, idx)=>{
+    //     if(session.time)
+    //   })])
+
+
+    // }, [])
 
 
     function handleSlotBooking(dateTime) {
@@ -78,7 +99,7 @@ const SessionProvider = ({ children }) => {
 
 
 
-            setUpComingSession([...upComingSession, { date, time, ampm, tech, level, dateTime }])
+            setUpComingSession([{ date, time, ampm, tech, level, dateTime }, ...upComingSession])
             toast({
                 description: "Successfully Booked",
                 status: "success",
@@ -99,7 +120,9 @@ const SessionProvider = ({ children }) => {
         }
 
     }
-    return (<sessionContext.Provider value={{ level, setLevel, tech, setTech, handleSlotBooking, upComingSession, setUpComingSession, sessionType, setSessionType, showNotification, userDateTime, notifications, setNotifications, setShowNotification }}>
+
+
+    return (<sessionContext.Provider value={{ level, setLevel, tech, setTech, handleSlotBooking, upComingSession, setUpComingSession, sessionType, setSessionType, showNotification, userDateTime, notifications, setNotifications, setShowNotification, previousSession, setPreviousSession, }}>
         {children}
     </sessionContext.Provider>
     )

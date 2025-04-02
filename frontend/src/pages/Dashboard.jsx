@@ -28,7 +28,7 @@ import Drawers from '../components/Drawers'
 import ButtonComp from '../miscellaneous/ButtonComp'
 const Dashboard = () => {
 
-    const { tech, setTech, upComingSession, setUpComingSession, sessionType, setSessionType, notifications, joinDisabled, setJoinDisabled } = useSession()
+    const { tech, setTech, upComingSession, setUpComingSession, sessionType, setSessionType, notifications, joinDisabled, setJoinDisabled, previousSession } = useSession()
     const navigate = useNavigate()
     const toast = useToast()
     const handleContinue = () => {
@@ -184,6 +184,37 @@ const Dashboard = () => {
                                                         </ButtonGroup></Td>
                                                     </Tr>
                                                 })) : (<Text fontSize="md">You Have No Upcoming Session:</Text>)}
+
+
+                                            </Tbody>
+                                        </>
+
+                                    )}
+                                    {sessionType === "Previous Session" && (
+                                        <>
+                                            <Thead>
+                                                <Tr>
+                                                    <Th>Session Type</Th>
+                                                    <Th>Date & Time</Th>
+                                                    <Th>Level</Th>
+                                                    <Th>Mentor</Th>
+                                                    <Th isNumeric>Report</Th>
+                                                </Tr>
+                                            </Thead>
+                                            <Tbody>
+                                                {(previousSession.length > 0) ? (previousSession?.map((data, idx) => {
+                                                    return <Tr key={idx}>
+                                                        <Td>{data.tech}</Td>
+
+                                                        <Td>{data.date} {data.time} {data.ampm}</Td>
+                                                        <Td>{data.level}</Td>
+                                                        <Td>AI</Td>
+                                                        <Td isNumeric> <ButtonGroup gap='4'>
+                                                            <ButtonComp handleJoinSession={() => handleJoinSession(data, idx)} data={data} index={idx} />
+                                                            <Button colorScheme='blackAlpha' size='xs' onClick={() => handleCancelSession(data, idx)}>Cancel</Button>
+                                                        </ButtonGroup></Td>
+                                                    </Tr>
+                                                })) : (<Text fontSize="md">You Have No Previus Session:</Text>)}
 
 
                                             </Tbody>

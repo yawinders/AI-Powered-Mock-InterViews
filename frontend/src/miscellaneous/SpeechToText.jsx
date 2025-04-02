@@ -5,9 +5,11 @@ import { AnalyzeIntro, AnalyzeProjFollowUP, AnalyzeQuestionAnswer, AskQuestion }
 import { speakText, speakTextt } from './speakText';
 import { useInterviewContext } from '../context/interviewDiscussion.jsx';
 import { data } from 'react-router-dom';
-import { extractQuestions } from './logics.jsx';
+import { extractQuestions, generateReport } from './logics.jsx';
 import { useSession } from '../context/Sessions.jsx';
-let step = "intro";
+
+
+
 const SpeechToText = ({ micOn, segmentLength = 7 }) => {
     const [projFollowUpQ, setProjFollowUpQ] = useState("")
     const [step, setStep] = useState("intro");
@@ -15,12 +17,15 @@ const SpeechToText = ({ micOn, segmentLength = 7 }) => {
     console.log(step);
     let count = useRef(1)
     const {
-        transcript,
+        transcript,  //whatever the user speaks
         listening,
         resetTranscript,
         browserSupportsSpeechRecognition
     } = useSpeechRecognition();
-    const { displayedSentence, setDisplayedSentence, displayedSegment, setDisplayedSegment } = useInterviewContext()
+    const { displayedSentence, setDisplayedSentence, displayedSegment, setDisplayedSegment, interviewTranscript, setInterviewTranscript, questionCount, setQuestionCount, startInteview, setStartInteview } = useInterviewContext()
+    console.log(questionCount);
+    console.log(interviewTranscript);
+
 
     useEffect(() => {
         if (!browserSupportsSpeechRecognition) {
@@ -29,39 +34,54 @@ const SpeechToText = ({ micOn, segmentLength = 7 }) => {
         }
 
         if (micOn && !listening) {
-            // Reset the transcript when starting to listen
             resetTranscript();
             SpeechRecognition.startListening({ continuous: true });
-        } else if (!micOn && listening) {
+        }
+        else if (!micOn && listening) {
             SpeechRecognition.stopListening();
+
+
             if (!transcript.trim()) {
                 speakText("I didn't hear anything. Could you please respond?", setDisplayedSentence);
-                return; // Do NOT move to the next step
+                return;
             }
 
             if (step === "intro") {
                 AnalyzeIntro(transcript).then((data) => {
                     speakText(data, setDisplayedSentence);
-                    const extractedQuestions = extractQuestions(data);//chekc the exracted quetion
-                    console.log(extractQuestions);
-
+                    const extractedQuestions = extractQuestions(data);
 
                     if (extractedQuestions.length > 0) {
                         setProjFollowUpQ(extractedQuestions);
-                        setStep("projFollowUP"); // Move to project follow-up step
+                        setStep("projFollowUP");
                     } else {
-                        setStep("question"); // Skip project follow-up if no project details
+                        setStep("question");
                     }
                 });
+                resetTranscript();
             }
             else if (step === "projFollowUP") {
+                const currentQuestion = projFollowUpQ.shift(); // Take the first follow-up question
+                speakText(currentQuestion, setDisplayedSentence);
+
                 AnalyzeProjFollowUP(transcript).then((data) => {
                     if (data.trim()) {
                         speakText(data, setDisplayedSentence);
-                        setStep("question"); // Move to general questions
+
+                        // Store Project Follow-Up question, answer, and AI suggestion
+                        setInterviewTranscript(prev => [
+                            ...prev,
+                            {
+                                stage: "Project Follow-Up",
+                                question: currentQuestion,
+                                answer: transcript,
+                                aiSuggestion: data
+                            }
+                        ]);
+
+                        setStep("question");
                     } else {
                         speakText("Could you clarify your project details?");
-                        return; // Do NOT move to next step if no valid response
                     }
                 });
             }
@@ -69,7 +89,13 @@ const SpeechToText = ({ micOn, segmentLength = 7 }) => {
                 AskQuestion(`${tech} ${level} level`).then((data) => {
                     if (data.trim()) {
                         speakText(data, setDisplayedSentence);
-                        setStep("answer")
+                        setStep("answer");
+
+                        // Temporarily store the question
+                        setInterviewTranscript(prev => [
+                            ...prev,
+                            { stage: "General Question", question: data }
+                        ]);
                     } else {
                         speakText("I didn't get that. Could you please elaborate?");
                     }
@@ -79,14 +105,28 @@ const SpeechToText = ({ micOn, segmentLength = 7 }) => {
                 AnalyzeQuestionAnswer(transcript).then((data) => {
                     if (data.trim()) {
                         speakText(data, setDisplayedSentence);
-                        count++;
-                        console.log(count);
 
-                        if (count === 3) {
-                            speakText("Thankyou for giving the interview")
+                        // Update the last stored question with answer and AI suggestion
+                        setInterviewTranscript(prev => {
+                            const updatedTranscript = [...prev];
+                            updatedTranscript[updatedTranscript.length - 1] = {
+                                ...updatedTranscript[updatedTranscript.length - 1],
+                                answer: transcript,
+                                aiSuggestion: data
+                            };
+                            return updatedTranscript;
+                        });
 
+                        setQuestionCount(prevCount => prevCount + 1);
+
+                        if (questionCount + 1 === 3) {
+                            speakText("Thank you for giving the interview.");
+                            // setStartInteview(false)
+                            generateReport(); // Call the report function
+                            return;
                         }
-                        setStep("question")
+
+                        setStep("question");
                     } else {
                         speakText("I didn't get that. Could you please elaborate?");
                     }
@@ -95,8 +135,7 @@ const SpeechToText = ({ micOn, segmentLength = 7 }) => {
 
 
         }
-        console.log(transcript);
-    }, [micOn, listening, resetTranscript, browserSupportsSpeechRecognition]);
+    }, [micOn, listening, resetTranscript, browserSupportsSpeechRecognition, questionCount]);
 
     useEffect(() => {
         const words = transcript.split(' ');
